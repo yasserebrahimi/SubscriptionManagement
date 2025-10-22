@@ -1,129 +1,82 @@
 version: '3.8'
 
 services:
-  subscription-api:
-    image: ghcr.io/${GITHUB_REPOSITORY:-yourorg/subscription-management}:${VERSION:-latest}
-    container_name: subscription-api
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Release}
-        VERSION: ${VERSION:-1.0.0}
-        BUILD_DATE: ${BUILD_DATE}
-        VCS_REF: ${GITHUB_SHA:-local}
-        VCS_URL: https://github.com/${GITHUB_REPOSITORY:-yourorg/subscription-management}
-      cache_from:
-        - ghcr.io/${GITHUB_REPOSITORY:-yourorg/subscription-management}:latest
-        - ghcr.io/${GITHUB_REPOSITORY:-yourorg/subscription-management}:build-cache
-    environment:
-      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=subscriptions;Username=postgres;Password=${DB_PASSWORD:-dev_password};Include Error Detail=true;
-      - ConnectionStrings__Redis=redis:6379,password=${REDIS_PASSWORD:-dev_redis}
-      - Logging__LogLevel__Default=Information
-      - Logging__LogLevel__Microsoft.AspNetcore=Warning
-      - Serilog__MinimumLevel__Default=Information
-      - OpenTelemetry__ServiceName=subscription-api
-      - OpenTelemetry__ServiceVersion=${VERSION:-1.0.0}
-      - FeatureFlags__EnableMetrics=true
-      - FeatureFlags__EnableTracing=true
-      - FeatureFlags__EnableHealthChecks=true
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks: [ subscription-network ]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 10s
-
   postgres:
     image: postgres:16-alpine
     container_name: subscription-postgres
+    restart: unless-stopped
     environment:
-      - POSTGRES_DB=subscriptions
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-dev_password}
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+      POSTGRES_DB: subscriptiondb
+      POSTGRES_USER: ${DB_USER:-dev}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports: [ "5432:5432" ]
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    ports:
-      - "5432:5432"
-    networks: [ subscription-network ]
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d subscriptions"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+    networks: [ subscription-network ]
+
+  subscription-webapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: subscription-webapi
     restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: subscriptiondb
+      DB_USER: ${DB_USER:-dev}
+      DB_PASSWORD: ${DB_PASSWORD:?Database password required}
+    ports: [ "8080:8080" ]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks: [ subscription-network ]
 
   redis:
     image: redis:7-alpine
     container_name: subscription-redis
-    command: redis-server --requirepass ${REDIS_PASSWORD:-dev_redis} --maxmemory 100mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+    ports: [ "6379:6379" ]
     volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    networks: [ subscription-network ]
+      - redis-data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
-      start_period: 5s
-    restart: unless-stopped
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: subscription-prometheus
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.enable-lifecycle'
-    ports:
-      - "9090:9090"
     networks: [ subscription-network ]
-    depends_on:
-      - subscription-api
-    restart: unless-stopped
 
-  grafana:
-    image: grafana/grafana:latest
-    container_name: subscription-grafana
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: subscription-jaeger
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
-    volumes:
-      - grafana_data:/var/lib/grafana
+      - COLLECTOR_OTLP_ENABLED=true
     ports:
-      - "3000:3000"
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
     networks: [ subscription-network ]
-    depends_on:
-      - prometheus
-    restart: unless-stopped
 
 networks:
-  subscription-network:
-    driver: bridge
+  subscription-network: { driver: bridge }
 
 volumes:
-  postgres_data:
-  redis_data:
-  prometheus_data:
-  grafana_data:
+  postgres-data: { driver: local }
+  redis-data: { driver: local }

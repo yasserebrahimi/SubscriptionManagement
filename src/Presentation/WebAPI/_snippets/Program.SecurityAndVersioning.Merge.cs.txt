@@ -1,0 +1,47 @@
+// === Merge into Program.cs (Security, RateLimiting, API Versioning, Migrations) ===
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.EntityFrameworkCore;
+using SubscriptionManagement.WebAPI.Middlewares;
+
+// 1) Rate Limiter
+builder.Services.AddRateLimiter(_ => _.AddFixedWindowLimiter("fixed", options =>
+{
+    options.Window = TimeSpan.FromMinutes(1);
+    options.PermitLimit = 200;
+    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    options.QueueLimit = 50;
+}));
+
+// 2) API Versioning
+builder.Services.AddApiVersioning(opts =>
+{
+    opts.DefaultApiVersion = new ApiVersion(1,0);
+    opts.AssumeDefaultVersionWhenUnspecified = true;
+    opts.ReportApiVersions = true;
+    opts.ApiVersionReader = ApiVersionReader.Combine(
+        new UrlSegmentApiVersionReader(),
+        new HeaderApiVersionReader("X-Api-Version"),
+        new MediaTypeApiVersionReader("version"));
+});
+builder.Services.AddVersionedApiExplorer(o => { o.GroupNameFormat = "'v'VVV"; o.SubstituteApiVersionInUrl = true; });
+
+// 3) Security Headers
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
+// 4) Use RateLimiter policy globally
+app.UseRateLimiter();
+
+// 5) Automatic migrations only in Development
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+}
+else
+{
+    app.Logger.LogInformation("Production environment: skipping auto-migrate (use migration bundle or job).");
+}

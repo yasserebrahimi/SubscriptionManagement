@@ -1,0 +1,72 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: subscription-postgres
+    environment:
+      - POSTGRES_DB=subscriptiondb
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?Database password required}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  webapi:
+    build:
+      context: .
+      dockerfile: src/Presentation/WebAPI/Dockerfile
+    image: webapi:local
+    container_name: subscription-webapi
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Postgres=Host=postgres;Port=5432;Database=subscriptiondb;Username=dev;Password=${DB_PASSWORD:?Database password required};Include Error Detail=${INCLUDE_ERROR_DETAIL:-false}
+      - OIDC__Authority=${OIDC_AUTHORITY:-https://keycloak.local/realms/dev}
+      - OIDC__Audience=${OIDC_AUDIENCE:-subscription-api}
+      - IDEMPOTENCY__TTL_HOURS=${IDEMPOTENCY_TTL_HOURS:-24}
+      - Resilience__Payment__BaseUrl=${PAYMENT_BASE_URL:-https://sandbox.example-payments.local/}
+    ports:
+      - "5080:8080"
+    networks: [subscription-network]
+
+  redis:
+    image: redis:7-alpine
+    container_name: subscription-redis
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:?Redis password required}
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --appendonly yes
+      --appendfsync everysec
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    ports:
+      - "6379:6379"
+    networks: [subscription-network]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    container_name: subscription-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+    networks: [subscription-network]
+
+networks:
+  subscription-network: {}
+
+volumes:
+  pgdata: {}

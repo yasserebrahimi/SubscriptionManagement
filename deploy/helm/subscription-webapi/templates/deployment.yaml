@@ -1,35 +1,131 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: subscription-webapi
+  name: {{ include "subscription-webapi.fullname" . }}
+  namespace: {{ .Values.namespace | default "default" }}
+  labels:
+    {{- include "subscription-webapi.labels" . | nindent 4 }}
 spec:
-  replicas: 2
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
-      app: subscription-webapi
+      {{- include "subscription-webapi.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
       labels:
-        app: subscription-webapi
+        {{- include "subscription-webapi.selectorLabels" . | nindent 8 }}
+        version: {{ .Values.image.tag | quote }}
     spec:
+      serviceAccountName: {{ include "subscription-webapi.serviceAccountName" . }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
+      {{- end }}
       containers:
-        - name: webapi
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities: { drop: ["ALL"] }
           ports:
-            - containerPort: 8080
+            - name: http
+              containerPort: 8080
+              protocol: TCP
           env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: {{ .Values.environment | default "Production" }}
             - name: ASPNETCORE_URLS
               value: "http://+:8080"
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: 8080
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "subscription-webapi.fullname" . }}-config
+                  key: db-host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "subscription-webapi.fullname" . }}-config
+                  key: db-port
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "subscription-webapi.fullname" . }}-config
+                  key: db-name
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-db-secret" (include "subscription-webapi.fullname" .)) }}
+                  key: username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.existingSecret | default (printf "%s-db-secret" (include "subscription-webapi.fullname" .)) }}
+                  key: password
+            {{- range .Values.extraEnv }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: app-tmp
+              mountPath: /app/tmp
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 20
+            httpGet: { path: {{ .Values.probes.liveness.path | default "/health" }}, port: http }
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds | default 20 }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds | default 5 }}
+            successThreshold: {{ .Values.probes.liveness.successThreshold | default 1 }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold | default 3 }}
+          readinessProbe:
+            httpGet: { path: {{ .Values.probes.readiness.path | default "/ready" }}, port: http }
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds | default 3 }}
+            successThreshold: {{ .Values.probes.readiness.successThreshold | default 1 }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold | default 3 }}
+          startupProbe:
+            httpGet: { path: {{ .Values.probes.startup.path | default "/health" }}, port: http }
+            initialDelaySeconds: {{ .Values.probes.startup.initialDelaySeconds | default 0 }}
+            periodSeconds: {{ .Values.probes.startup.periodSeconds | default 5 }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds | default 3 }}
+            successThreshold: {{ .Values.probes.startup.successThreshold | default 1 }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold | default 30 }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: app-tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/name
+                      operator: In
+                      values: [ {{ include "subscription-webapi.name" . }} ]
+                topologyKey: kubernetes.io/hostname
