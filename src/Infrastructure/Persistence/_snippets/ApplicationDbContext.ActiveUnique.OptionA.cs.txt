@@ -1,0 +1,8 @@
+// Append inside Subscription entity config
+cfg.HasIndex(x => x.UserId)
+   .HasFilter("\"Status\" = 'Active'")
+   .IsUnique()
+   .HasDatabaseName("ux_subscriptions_user_active");
+
+cfg.HasIndex(x => new { x.UserId, x.Status, x.CreatedAtUtc })
+   .HasDatabaseName("ix_subscriptions_user_status_created");

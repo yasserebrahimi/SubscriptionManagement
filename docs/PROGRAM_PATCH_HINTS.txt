@@ -1,0 +1,8 @@
+
+// In Program.cs, update DbContext registration to include snake_case (optional, helps PG convention):
+// builder.Services.AddDbContext<ApplicationDbContext>(o =>
+//     o.UseNpgsql(conn, npgsql => npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(3), null))
+//      .UseSnakeCaseNamingConvention());
+//
+// Also ensure Swagger + Newtonsoft support if using polymorphic ProblemDetails examples:
+// builder.Services.AddSwaggerGenNewtonsoftSupport();

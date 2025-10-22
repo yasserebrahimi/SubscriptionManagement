@@ -1,0 +1,25 @@
+### Base
+@host = http://localhost:5000
+@api = {{host}}/api/v1
+
+### Health
+GET {{host}}/health
+
+### Get plans
+GET {{api}}/plans
+
+### Activate (requires Idempotency-Key)
+POST {{api}}/subscriptions/activate
+Idempotency-Key: test-key-123
+Content-Type: application/json
+
+{
+  "userId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+  "planId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+}
+
+### Deactivate
+PUT {{api}}/subscriptions/11111111-2222-3333-4444-555555555555/deactivate
+Content-Type: application/json
+
+{ "reason": "User requested" }

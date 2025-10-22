@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: Subscription API
+  version: "1.0"
+servers:
+  - url: http://localhost:5000
+paths:
+  /api/v1/plans:
+    get:
+      summary: List active plans
+      tags: [Plans]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultOfSubscriptionPlanList"
+  /api/v1/subscriptions/activate:
+    post:
+      summary: Activate a subscription
+      tags: [Subscriptions]
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateActivateCommand" }
+            examples:
+              sample:
+                value: { userId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", planId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb" }
+      responses:
+        "200":
+          description: Activated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResultOfSubscriptionDto" }
+              examples:
+                success: { $ref: "#/components/examples/Activate200" }
+        "404":
+          description: Plan not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+              examples: { notFound: { $ref: "#/components/examples/NotFound404" } }
+        "409":
+          description: Active exists
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+              examples: { conflict: { $ref: "#/components/examples/Conflict409" } }
+        "422":
+          description: Validation failed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ValidationProblemDetails" }
+              examples: { validation: { $ref: "#/components/examples/Validation422" } }
+  /api/v1/subscriptions/{id}/deactivate:
+    put:
+      summary: Deactivate
+      tags: [Subscriptions]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DeactivateCommand" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResultOfBoolean" }
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProblemDetails" }
+components:
+  schemas:
+    CreateActivateCommand:
+      type: object
+      required: [userId, planId]
+      properties:
+        userId: { type: string, format: uuid }
+        planId: { type: string, format: uuid }
+    DeactivateCommand:
+      type: object
+      properties:
+        reason: { type: string }
+    SubscriptionDto:
+      type: object
+      properties:
+        subscriptionId: { type: string, format: uuid }
+        userId: { type: string, format: uuid }
+        planId: { type: string, format: uuid }
+        status: { type: string }
+        startDate: { type: string, format: date-time }
+        endDate: { type: string, format: date-time }
+    SubscriptionPlanDto:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        price: { type: number, format: decimal }
+        durationInDays: { type: integer }
+    ResultOfSubscriptionDto:
+      type: object
+      properties:
+        isSuccess: { type: boolean }
+        data: { $ref: "#/components/schemas/SubscriptionDto" }
+        error: { type: string, nullable: true }
+    ResultOfSubscriptionPlanList:
+      type: object
+      properties:
+        isSuccess: { type: boolean }
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/SubscriptionPlanDto" }
+    ResultOfBoolean:
+      type: object
+      properties:
+        isSuccess: { type: boolean }
+        data: { type: boolean }
+    ProblemDetails:
+      type: object
+      properties:
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+    ValidationProblemDetails:
+      allOf:
+        - $ref: "#/components/schemas/ProblemDetails"
+      type: object
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+  examples:
+    Activate200:
+      value:
+        isSuccess: true
+        data:
+          subscriptionId: "11111111-2222-3333-4444-555555555555"
+          userId: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+          planId: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+          status: "Active"
+          startDate: "2025-01-01T00:00:00Z"
+          endDate: "2025-01-31T00:00:00Z"
+    Conflict409:
+      value:
+        title: "Conflict"
+        status: 409
+        detail: "Active subscription exists"
+    NotFound404:
+      value:
+        title: "Not Found"
+        status: 404
+        detail: "Plan not found or inactive"
+    Validation422:
+      value:
+        title: "Validation Failed"
+        status: 422
+        errors:
+          userId: ["UserId must not be empty."]
+          planId: ["PlanId must not be empty."]

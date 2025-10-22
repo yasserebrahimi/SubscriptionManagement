@@ -1,0 +1,113 @@
+// === Readiness, Serilog, Polly-from-config+metrics (merge carefully into Program.cs) ===
+using System.Diagnostics.Metrics;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Serilog;
+using Serilog.Events;
+using Serilog.Enrichers;
+using Serilog.Exceptions;
+using SubscriptionManagement.WebAPI.Logging;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Serilog bootstrap
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Service", "SubscriptionWebAPI")
+    .Enrich.WithEnvironmentName()
+    .Enrich.WithProcessId()
+    .Enrich.WithThreadId()
+    .Enrich.With(new MaskingEnricher())
+    .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Information)
+    .CreateLogger();
+builder.Host.UseSerilog();
+
+// HealthChecks (readiness + liveness)
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: new[] { "live" })
+    .AddNpgSql(builder.Configuration.GetConnectionString("Postgres") ?? "", name: "postgres", tags: new[] { "ready" });
+
+// Swagger problem+json examples (ensure classes exist)
+builder.Services.AddSwaggerGen(c => {
+    c.OperationFilter<SubscriptionManagement.WebAPI.Swagger.ProblemDetailsResponsesOperationFilter>();
+});
+
+// Authorization policy
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SubscriptionsWrite", p => p.RequireClaim("scope", "subscriptions:write"));
+});
+
+// Polly from config + metrics
+using Polly;
+using Polly.Extensions.Http;
+using System.Net;
+var meter = new Meter("SubscriptionWebAPI.Resilience", "1.0.0");
+var retryCounter = meter.CreateCounter<long>("payment_http_retries");
+var circuitOpenCounter = meter.CreateCounter<long>("payment_circuit_breaker_open");
+
+var cfg = builder.Configuration.GetSection("Resilience:Payment");
+var baseUrl = cfg["BaseUrl"] ?? "https://sandbox.example-payments.local/";
+int retryCount = int.TryParse(cfg["RetryCount"], out var rc) ? rc : 5;
+int circuitFailures = int.TryParse(cfg["CircuitFailures"], out var cf) ? cf : 5;
+int circuitDurationSec = int.TryParse(cfg["CircuitDurationSec"], out var cd) ? cd : 30;
+int timeoutSec = int.TryParse(cfg["TimeoutSec"], out var ts) ? ts : 3;
+
+IAsyncPolicy<HttpResponseMessage> retry = HttpPolicyExtensions
+    .HandleTransientHttpError()
+    .OrResult(r => (int)r.StatusCode == 429)
+    .WaitAndRetryAsync(retryCount, i => TimeSpan.FromMilliseconds(200 * Math.Pow(2, i)),
+        onRetry: (outcome, timespan, attempt, ctx) => retryCounter.Add(1));
+
+IAsyncPolicy<HttpResponseMessage> breaker = HttpPolicyExtensions
+    .HandleTransientHttpError()
+    .CircuitBreakerAsync(circuitFailures, TimeSpan.FromSeconds(circuitDurationSec),
+        onBreak: (outcome, breakDelay) => circuitOpenCounter.Add(1),
+        onReset: () => {});
+
+builder.Services.AddHttpClient("PaymentGateway", c =>
+{
+    c.BaseAddress = new Uri(baseUrl);
+    c.Timeout = TimeSpan.FromSeconds(Math.Max(5, timeoutSec));
+})
+.AddPolicyHandler(retry)
+.AddPolicyHandler(breaker)
+.AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(timeoutSec)))
+.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(20, 40));
+
+var app = builder.Build();
+
+// Health endpoints
+app.MapHealthChecks("/health", new HealthCheckOptions {
+    Predicate = r => r.Tags.Contains("live")
+});
+
+app.MapHealthChecks("/ready", new HealthCheckOptions {
+    Predicate = r => r.Tags.Contains("ready"),
+    ResponseWriter = async (ctx, report) =>
+    {
+        ctx.Response.ContentType = "application/json";
+        var json = System.Text.Json.JsonSerializer.Serialize(new {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                durationMs = e.Value.Duration.TotalMilliseconds,
+                error = e.Value.Exception?.Message
+            })
+        });
+        await ctx.Response.WriteAsync(json);
+    }
+});
+
+// Serilog request logging
+app.UseSerilogRequestLogging(opts => {
+    opts.IncludeQueryInRequestPath = true;
+    opts.GetLevel = (httpContext, elapsed, ex) => LogEventLevel.Information;
+});
+
+// ... keep the rest of your pipeline (exception handler, correlation, headers, ratelimiter, cors, auth, etc.)
+
+// app.MapControllers();
+// app.Run();

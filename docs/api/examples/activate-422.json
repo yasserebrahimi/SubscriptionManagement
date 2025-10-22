@@ -1,0 +1,8 @@
+{
+  "title": "Validation Failed",
+  "status": 422,
+  "errors": {
+    "userId": ["UserId must not be empty."],
+    "planId": ["PlanId must not be empty."]
+  }
+}

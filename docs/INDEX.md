@@ -1,0 +1,39 @@
+# Documentation Index
+
+- **Overview** – What/Why/How
+- **Architecture**
+  - Clean Architecture
+  - C4: System / Container / Component
+  - DDD & Bounded Contexts
+  - Deployment Topologies (Monolith → Microservices)
+- **Domain**
+  - ER Diagram & Invariants (Active uniqueness)
+  - Use Cases & Policies
+- **API**
+  - Endpoints Matrix (v1)
+  - Versioning Strategy
+  - Error Model (RFC7807) + Examples
+  - Idempotency (Key, TTL, semantics)
+- **Security**
+  - OIDC/JWT & Policies
+  - Threat Modeling (STRIDE)
+  - Rate Limiting, CORS, Security Headers
+- **Operations**
+  - Observability (OTEL/Prometheus)
+  - SLI/SLO & Dashboards (PromQL)
+  - Runbooks & Alerts
+- **Deployment**
+  - Local (compose)
+  - Helm (charts) – optional
+  - Environments (Dev/Stage/Prod)
+- **CI/CD**
+- **Testing**
+  - Unit, Integration (Testcontainers), Contract (Pact), Performance (k6)
+  - Test Plan & Matrix
+- **DB**
+  - Migrations, Indexing, Active uniqueness Option A/B
+- **Guides**
+  - Quickstart, Troubleshooting, Contribution, Release, OpenTelemetry
+- **ADR**
+  - Decision records
+- **Glossary**

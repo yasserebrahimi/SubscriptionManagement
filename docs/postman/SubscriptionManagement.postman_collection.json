@@ -1,0 +1,37 @@
+{
+  "info": {
+    "name": "SubscriptionManagement API",
+    "_postman_id": "11111111-2222-3333-4444-555555555555",
+    "description": "Collection for plans, activate, deactivate",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "Get Plans",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/plans" }
+    },
+    {
+      "name": "Activate",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Idempotency-Key", "value": "test-key-123" }, { "key": "Content-Type", "value": "application/json" } ],
+        "url": "{{baseUrl}}/api/v1/subscriptions/activate",
+        "body": { "mode": "raw", "raw": "{\n  \"userId\": \"aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa\",\n  \"planId\": \"bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb\"\n}" }
+      }
+    },
+    {
+      "name": "Deactivate",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": "{{baseUrl}}/api/v1/subscriptions/11111111-2222-3333-4444-555555555555/deactivate",
+        "body": { "mode": "raw", "raw": "{ \"reason\": \"User requested\" }" }
+      }
+    }
+  ],
+  "variable": [ { "key": "baseUrl", "value": "http://localhost:5000" } ]
+}

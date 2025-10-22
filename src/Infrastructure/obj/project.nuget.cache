@@ -1,0 +1,69 @@
+{
+  "version": 2,
+  "dgSpecHash": "CcqT/yeM83o=",
+  "success": false,
+  "projectFilePath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.entityframeworkcore\\8.0.7\\microsoft.entityframeworkcore.8.0.7.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\8.0.8\\microsoft.entityframeworkcore.abstractions.8.0.8.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\8.0.7\\microsoft.entityframeworkcore.analyzers.8.0.7.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\8.0.8\\microsoft.entityframeworkcore.relational.8.0.8.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\8.0.0\\microsoft.extensions.caching.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.caching.memory\\8.0.0\\microsoft.extensions.caching.memory.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\8.0.0\\microsoft.extensions.configuration.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\8.0.0\\microsoft.extensions.dependencyinjection.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.logging\\8.0.0\\microsoft.extensions.logging.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.options\\8.0.0\\microsoft.extensions.options.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\microsoft.extensions.primitives\\8.0.0\\microsoft.extensions.primitives.8.0.0.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\npgsql\\8.0.4\\npgsql.8.0.4.nupkg.sha512",
+    "C:\\Users\\ASUS\\.nuget\\packages\\npgsql.entityframeworkcore.postgresql\\8.0.8\\npgsql.entityframeworkcore.postgresql.8.0.8.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Error",
+      "message": "Warning As Error: SubscriptionManagement.Infrastructure depends on Npgsql.EntityFrameworkCore.PostgreSQL (>= 8.0.5) but Npgsql.EntityFrameworkCore.PostgreSQL 8.0.5 was not found. Npgsql.EntityFrameworkCore.PostgreSQL 8.0.8 was resolved instead.",
+      "projectPath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "filePath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "libraryId": "Npgsql.EntityFrameworkCore.PostgreSQL",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1104",
+      "level": "Error",
+      "message": "Unable to find project 'E:\\MyProjects\\SubscriptionManagement\\Core\\Domain\\SubscriptionManagement.Domain.csproj'. Check that the project reference is valid and that the project file exists.",
+      "projectPath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "filePath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "libraryId": "E:\\MyProjects\\SubscriptionManagement\\Core\\Domain\\SubscriptionManagement.Domain.csproj",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1104",
+      "level": "Error",
+      "message": "Unable to find project 'E:\\MyProjects\\SubscriptionManagement\\Core\\Application\\SubscriptionManagement.Application.csproj'. Check that the project reference is valid and that the project file exists.",
+      "projectPath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "filePath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "libraryId": "E:\\MyProjects\\SubscriptionManagement\\Core\\Application\\SubscriptionManagement.Application.csproj",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    },
+    {
+      "code": "NU1605",
+      "level": "Error",
+      "message": "Warning As Error: Detected package downgrade: Microsoft.EntityFrameworkCore from 8.0.8 to 8.0.7. Reference the package directly from the project to select a different version. \r\n SubscriptionManagement.Infrastructure -> Npgsql.EntityFrameworkCore.PostgreSQL 8.0.8 -> Microsoft.EntityFrameworkCore (>= 8.0.8) \r\n SubscriptionManagement.Infrastructure -> Microsoft.EntityFrameworkCore (>= 8.0.7)",
+      "projectPath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "filePath": "E:\\MyProjects\\SubscriptionManagement\\src\\Infrastructure\\SubscriptionManagement.Infrastructure.csproj",
+      "libraryId": "Microsoft.EntityFrameworkCore",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
+}

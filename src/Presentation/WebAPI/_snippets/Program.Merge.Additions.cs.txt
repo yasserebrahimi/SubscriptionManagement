@@ -1,0 +1,33 @@
+// Program.cs additions (merge carefully)
+
+// 1) Swagger: add RFC7807 examples operation filter
+builder.Services.AddSwaggerGen(c =>
+{
+    // keep your existing swagger config here...
+    c.OperationFilter<ProblemDetailsResponsesOperationFilter>();
+});
+
+// 2) Authorization policy for write endpoints
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("SubscriptionsWrite", p => p.RequireClaim("scope", "subscriptions:write"));
+});
+
+// 3) Polly HttpClient (example external dependency)
+using Polly;
+using Polly.Extensions.Http;
+using System.Net;
+
+var baseUrl = builder.Configuration["Payment:BaseUrl"] ?? "https://sandbox.example-payments.local/";
+builder.Services.AddHttpClient("PaymentGateway", c =>
+{
+    c.BaseAddress = new Uri(baseUrl);
+    c.Timeout = TimeSpan.FromSeconds(5);
+})
+.AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+    .OrResult(r => (int)r.StatusCode == 429)
+    .WaitAndRetryAsync(5, i => TimeSpan.FromMilliseconds(200 * Math.Pow(2, i))))
+.AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+    .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)))
+.AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(3)))
+.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(20, 40));

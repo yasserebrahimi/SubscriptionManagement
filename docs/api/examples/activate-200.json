@@ -1,0 +1,11 @@
+{
+  "isSuccess": true,
+  "data": {
+    "subscriptionId": "11111111-2222-3333-4444-555555555555",
+    "userId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+    "planId": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+    "status": "Active",
+    "startDate": "2025-01-01T00:00:00Z",
+    "endDate": "2025-01-31T00:00:00Z"
+  }
+}

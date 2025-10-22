@@ -1,0 +1,22 @@
+extends: ["spectral:oas", "spectral:asyncapi"]
+rules:
+  operation-operationId:
+    description: OperationId required
+    given: $.paths[*][*]
+    then:
+      field: operationId
+      function: truthy
+  info-contact:
+    description: Contact must be present
+    given: $.info
+    then:
+      field: contact
+      function: truthy
+  response-problem-json:
+    description: Recommend application/problem+json
+    given: $.paths[*][*].responses[*].content
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object

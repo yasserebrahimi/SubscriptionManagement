@@ -1,0 +1,33 @@
+// Swagger RFC7807
+builder.Services.AddSwaggerGen(c =>
+{
+    // keep your existing swagger config
+    c.OperationFilter<ProblemDetailsResponsesOperationFilter>();
+});
+
+// Polly resilience for PaymentGateway
+using Polly;
+using Polly.Extensions.Http;
+using System.Net;
+
+var baseUrl = builder.Configuration["Payment:BaseUrl"] ?? "https://sandbox.example-payments.local/";
+builder.Services.AddHttpClient("PaymentGateway", c =>
+{
+    c.BaseAddress = new Uri(baseUrl);
+    c.Timeout = TimeSpan.FromSeconds(5);
+})
+.AddPolicyHandler(GetRetryPolicy())
+.AddPolicyHandler(GetCircuitBreakerPolicy())
+.AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(3)))
+.AddPolicyHandler(Policy.BulkheadAsync<HttpResponseMessage>(20, 40));
+
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy() =>
+    HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .OrResult(r => (int)r.StatusCode == 429)
+        .WaitAndRetryAsync(5, i => TimeSpan.FromMilliseconds(200 * Math.Pow(2, i)));
+
+static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy() =>
+    HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
