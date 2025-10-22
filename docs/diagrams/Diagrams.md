@@ -1,19 +1,21 @@
 # Diagrams (Mermaid)
 
 ## ERD
+
+
 ```mermaid
 erDiagram
   SubscriptionPlan ||--o{ Subscription : has
   Subscription {
-    Guid Id PK
+    Guid Id
     Guid UserId
-    Guid PlanId FK
+    Guid PlanId
     datetime StartDate
     datetime EndDate
     int Status
   }
   SubscriptionPlan {
-    Guid Id PK
+    Guid Id
     string Name
     string Description
     decimal Price
@@ -21,6 +23,8 @@ erDiagram
     bool IsActive
   }
 ```
+
+
 
 ## Sequence (Activate)
 ```mermaid

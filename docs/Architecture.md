@@ -9,14 +9,27 @@
 ## Diagrams
 
 ### High level
+
+
 ```mermaid
 flowchart LR
-  UI[Clients] --> API[WebAPI]
-  API --> APP[Application]
-  APP --> DOM[Domain]
-  APP --> INF[Infrastructure]
-  INF --> DB[(PostgreSQL)]
-  INF --> BUS[(RabbitMQ)]
-  INF --> REDIS[(Redis)]
-  API --> METRICS[Prometheus /metrics]
+  UI["Clients"]
+  API["WebAPI"]
+  APP["Application"]
+  DOM["Domain"]
+  INF["Infrastructure"]
+  DB["/ PostgreSQL"]
+  BUS["/ RabbitMQ"]
+  REDIS["/ Redis"]
+  METRICS["Prometheus /metrics"]
+  UI --> API
+  API --> APP
+  APP --> DOM
+  APP --> INF
+  INF --> DB
+  INF --> BUS
+  INF --> REDIS
+  API --> METRICS
 ```
+
+

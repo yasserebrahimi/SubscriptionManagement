@@ -6,16 +6,27 @@
 - **Infrastructure**: EF Core + Npgsql; Idempotency store; Outbox with background processor; Redis; OTEL exporters; bus adapters.
 - **Presentation**: ASP.NET Core WebAPI with a hardened middleware pipeline.
 
+
+
 ```mermaid
 flowchart LR
-  UI --> P[Presentation]
-  P --> A[Application]
-  A --> D[Domain]
-  A --> I[Infrastructure]
-  I --> DB[(PostgreSQL)]
-  I --> Cache[(Redis)]
-  I --> Bus[(RabbitMQ)]
+  P["Presentation"]
+  A["Application"]
+  D["Domain"]
+  I["Infrastructure"]
+  DB["/ PostgreSQL"]
+  Cache["/ Redis"]
+  Bus["/ RabbitMQ"]
+  UI --> P
+  P --> A
+  A --> D
+  A --> I
+  I --> DB
+  I --> Cache
+  I --> Bus
 ```
+
+
 
 ## Middleware Order (critical)
 1. `UseExceptionHandler` (ProblemDetails)

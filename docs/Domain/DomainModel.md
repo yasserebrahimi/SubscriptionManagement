@@ -1,27 +1,31 @@
 # Domain Model
 
+
+
 ```mermaid
 erDiagram
   USER ||--o{ SUBSCRIPTION : has
   PLAN ||--o{ SUBSCRIPTION : selected
   SUBSCRIPTION {
-    uuid id PK
+    uuid id
     uuid user_id
     uuid plan_id
-    string status  // Active, Inactive, Cancelled
+    string status
     timestamp created_at_utc
-    timestamp? deactivated_at_utc
+    timestamp deactivated_at_utc
   }
   PLAN {
-    uuid id PK
+    uuid id
     string name
     numeric price
   }
   USER {
-    uuid id PK
+    uuid id
     string email
   }
 ```
+
+
 
 ## Invariants
 - **Option A (chosen)**: *User may have at most one Active subscription at a time.*
