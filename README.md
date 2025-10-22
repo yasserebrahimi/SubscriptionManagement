@@ -130,13 +130,22 @@ infra/
 erDiagram
   USER ||--o{ SUBSCRIPTION : has
   PLAN ||--o{ SUBSCRIPTION : selected
+
+  USER {
+    uuid id
+  }
+
+  PLAN {
+    uuid id
+  }
+
   SUBSCRIPTION {
-    uuid id PK
+    uuid id
     uuid user_id
     uuid plan_id
-    string status  // Active, Inactive, Cancelled
-    timestamp created_at_utc
-    timestamp? deactivated_at_utc
+    string status
+    string created_at_utc
+    string deactivated_at_utc
   }
 ```
 
