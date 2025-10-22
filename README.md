@@ -46,24 +46,14 @@ A production-grade **.NET 8** backend demonstrating:
 
 ```mermaid
 flowchart LR
-  UI["Clients"]
-  P["Presentation / Web API"]
-  A["Application"]
-  D["Domain"]
-  I["Infrastructure"]
-  DB[("PostgreSQL")]
-  CCH[("Redis")]
-  BUS[("RabbitMQ")]
-  PROM["Prometheus"]
-
-  UI --> P
-  P  --> A
-  A  --> D
-  A  --> I
-  I  --> DB
-  I  --> CCH
-  I  --> BUS
-  P  -- /metrics --> PROM
+  UI[Clients] --> P[Presentation (WebAPI)]
+  P --> A[Application]
+  A --> D[Domain]
+  A --> I[Infrastructure]
+  I --> DB[(PostgreSQL)]
+  I --> Cache[(Redis)]
+  I --> Bus[(RabbitMQ)]
+  P -->|/metrics| Prometheus[(Prometheus)]
 ```
 
 **Presentation**: Middlewares (ExceptionHandler/ProblemDetails → Correlation → SecurityHeaders → RateLimiter → CORS → AuthN → AuthZ → MapControllers), API Versioning, Swagger
