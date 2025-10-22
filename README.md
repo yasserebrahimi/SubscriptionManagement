@@ -472,6 +472,3 @@ Global **OperationFilter** adds example bodies for 400/401/404/409/429 under `ap
 * `src/Presentation/WebAPI/Swagger/ProblemDetailsResponsesOperationFilter.cs`
 * `src/Presentation/WebAPI/Swagger/ProblemDetailsExampleFactory.cs`
 
----
-
-If you want, I can **package this README as a file** and also update your **docs/** map accordingly; or even inject your actual **yasserebrahimi/SubscriptionManagement** in the content and return a ready-to-commit zip.
