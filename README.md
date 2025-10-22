@@ -1,28 +1,28 @@
 Here’s a **complete, professional, and very detailed README** for your repo—organized into **20 numbered sections** and packed with diagrams, tables, and hands-on commands. It’s written as if someone has **zero context**, so they can go from 0 → 100 confidently.
 
-> Replace `OWNER/REPO` with your repo path (e.g. `yasserebrahimi/SubscriptionManagement`) where noted.
+> Replace `yasserebrahimi/SubscriptionManagement` with your repo path (e.g. `yasserebrahimi/SubscriptionManagement`) where noted.
 
 ---
 
 # Subscription Management
 
 <p align="center">
-  <a href="https://github.com/OWNER/REPO/actions/workflows/ci.yml">
-    <img src="https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg" alt="CI" />
+  <a href="https://github.com/yasserebrahimi/SubscriptionManagement/actions">
+    <img src="https://img.shields.io/badge/CI-setup%20pending-lightgrey?logo=githubactions&logoColor=white" alt="CI" />
   </a>
-  <a href="https://github.com/OWNER/REPO/actions/workflows/trivy.yml">
-    <img src="https://github.com/OWNER/REPO/actions/workflows/trivy.yml/badge.svg" alt="Trivy" />
+  <a href="https://github.com/yasserebrahimi/SubscriptionManagement/actions">
+    <img src="https://img.shields.io/badge/Trivy-setup%20pending-lightgrey?logo=trivy&logoColor=white" alt="Trivy" />
   </a>
-  <a href="https://app.codecov.io/gh/OWNER/REPO">
-    <img src="https://codecov.io/gh/OWNER/REPO/branch/main/graph/badge.svg" alt="codecov" />
+  <a href="https://app.codecov.io/gh/yasserebrahimi/SubscriptionManagement">
+    <img src="https://img.shields.io/badge/Coverage-pending-lightgrey?logo=codecov&logoColor=white" alt="codecov" />
   </a>
-  <a href="https://sonarcloud.io/project/overview?id=OWNER_REPO">
-    <img src="https://sonarcloud.io/api/project_badges/measure?project=OWNER_REPO&metric=alert_status" alt="SonarCloud" />
+  <a href="https://sonarcloud.io/projects?search=yasserebrahimi%2FSubscriptionManagement">
+    <img src="https://img.shields.io/badge/SonarCloud-pending-lightgrey?logo=sonarcloud&logoColor=white" alt="SonarCloud" />
   </a>
-  <img src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white" />
-  <img src="https://img.shields.io/badge/DB-PostgreSQL-336791?logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Obs-OpenTelemetry-000000?logo=opentelemetry&logoColor=white" />
-  <img src="https://img.shields.io/badge/Auth-JWT%2FOIDC-2F855A" />
+  <img src="https://img.shields.io/badge/.NET-8.0-512BD4?logo=dotnet&logoColor=white" alt=".NET 8.0" />
+  <img src="https://img.shields.io/badge/DB-PostgreSQL-336791?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Obs-OpenTelemetry-000000?logo=opentelemetry&logoColor=white" alt="OpenTelemetry" />
+  <img src="https://img.shields.io/badge/Auth-JWT%2FOIDC-2F855A" alt="Auth JWT/OIDC" />
 </p>
 
 ---
@@ -46,14 +46,24 @@ A production-grade **.NET 8** backend demonstrating:
 
 ```mermaid
 flowchart LR
-  UI[Clients] --> P[Presentation (WebAPI)]
-  P --> A[Application]
-  A --> D[Domain]
-  A --> I[Infrastructure]
-  I --> DB[(PostgreSQL)]
-  I --> Cache[(Redis)]
-  I --> Bus[(RabbitMQ)]
-  P -->|/metrics| Prometheus[(Prometheus)]
+  UI["Clients"]
+  P["Presentation / Web API"]
+  A["Application"]
+  D["Domain"]
+  I["Infrastructure"]
+  DB[("PostgreSQL")]
+  CCH[("Redis")]
+  BUS[("RabbitMQ")]
+  PROM["Prometheus"]
+
+  UI --> P
+  P  --> A
+  A  --> D
+  A  --> I
+  I  --> DB
+  I  --> CCH
+  I  --> BUS
+  P  -- /metrics --> PROM
 ```
 
 **Presentation**: Middlewares (ExceptionHandler/ProblemDetails → Correlation → SecurityHeaders → RateLimiter → CORS → AuthN → AuthZ → MapControllers), API Versioning, Swagger
@@ -227,20 +237,20 @@ OIDC__Audience=subscription-api
 IDEMPOTENCY__TTL_HOURS=24
 ```
 
-> **Placeholders** → replace `OWNER/REPO` safely in README:
+> **Placeholders** → replace `yasserebrahimi/SubscriptionManagement` safely in README:
 
 * PowerShell (correct way):
 
   ```powershell
   $c = Get-Content -Raw README.md
-  $c = $c -replace 'OWNER/REPO','yasserebrahimi/SubscriptionManagement'
-  $c = $c -replace 'OWNER_REPO','yasserebrahimi_SubscriptionManagement'
+  $c = $c -replace 'yasserebrahimi/SubscriptionManagement','yasserebrahimi/SubscriptionManagement'
+  $c = $c -replace 'yasserebrahimi_SubscriptionManagement','yasserebrahimi_SubscriptionManagement'
   Set-Content README.md $c -Encoding UTF8
   ```
 * bash:
 
   ```bash
-  sed -i 's|OWNER/REPO|yasserebrahimi/SubscriptionManagement|g; s|OWNER_REPO|yasserebrahimi_SubscriptionManagement|g' README.md
+  sed -i 's|yasserebrahimi/SubscriptionManagement|yasserebrahimi/SubscriptionManagement|g; s|yasserebrahimi_SubscriptionManagement|yasserebrahimi_SubscriptionManagement|g' README.md
   ```
 
 ---
@@ -362,7 +372,7 @@ Workflows (`.github/workflows`):
 * `docker-publish.yml` — build & push image to **GHCR**
 * `codeql.yml`, `dependency-review.yml`, `release-drafter.yml`
 
-**Badges** (top of README) point to `OWNER/REPO`.
+**Badges** (top of README) point to `yasserebrahimi/SubscriptionManagement`.
 **Recommended gates**: build green, coverage ≥ **70%**, Sonar **Quality Gate: Passed**, Trivy **no Critical**.
 
 ---
@@ -380,7 +390,7 @@ dotnet run --project src/Presentation/WebAPI/SubscriptionManagement.WebAPI.cspro
 
 ```bash
 helm upgrade --install subscription-webapi deploy/helm/subscription-webapi -n subscription --create-namespace \
-  --set image.repository=ghcr.io/OWNER/REPO-webapi \
+  --set image.repository=ghcr.io/yasserebrahimi/SubscriptionManagement-webapi \
   --set image.tag=latest
 ```
 
@@ -464,4 +474,4 @@ Global **OperationFilter** adds example bodies for 400/401/404/409/429 under `ap
 
 ---
 
-If you want, I can **package this README as a file** and also update your **docs/** map accordingly; or even inject your actual **OWNER/REPO** in the content and return a ready-to-commit zip.
+If you want, I can **package this README as a file** and also update your **docs/** map accordingly; or even inject your actual **yasserebrahimi/SubscriptionManagement** in the content and return a ready-to-commit zip.
