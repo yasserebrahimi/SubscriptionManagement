@@ -44,28 +44,16 @@ A production-grade **.NET 8** backend demonstrating:
 
 ## 2) Architecture at a Glance (Clean Architecture)
 
-```
-
-mermaid
+```mermaid
 flowchart LR
-  UI["Clients"]
-  P["Presentation / Web API"]
-  A["Application"]
-  D["Domain"]
-  I["Infrastructure"]
-  DB[("PostgreSQL")]
-  CCH[("Redis")]
-  BUS[("RabbitMQ")]
-  PROM["Prometheus"]
-
-  UI --> P
-  P  --> A
-  A  --> D
-  A  --> I
-  I  --> DB
-  I  --> CCH
-  I  --> BUS
-  P  -- /metrics --> PROM
+  UI[Clients] --> P[Presentation (WebAPI)]
+  P --> A[Application]
+  A --> D[Domain]
+  A --> I[Infrastructure]
+  I --> DB[(PostgreSQL)]
+  I --> Cache[(Redis)]
+  I --> Bus[(RabbitMQ)]
+  P -->|/metrics| Prometheus[(Prometheus)]
 ```
 
 **Presentation**: Middlewares (ExceptionHandler/ProblemDetails → Correlation → SecurityHeaders → RateLimiter → CORS → AuthN → AuthZ → MapControllers), API Versioning, Swagger
@@ -86,9 +74,7 @@ Current delivery is a **modular monolith** (one WebAPI). It’s designed to spli
 * **NotificationService** *(planned)*: email/SMS
 * **IdentityProvider** *(external)*: Keycloak/Duende
 
-```
-
-mermaid
+```mermaid
 flowchart LR
   Client -->|HTTPS| API[Subscription WebAPI]
   API --> App[Application]
@@ -115,7 +101,6 @@ flowchart LR
 ## 4) Project Structure (Tree)
 
 ```
-
 src/
   Core/Domain/...
   Core/Application/...
@@ -141,21 +126,17 @@ infra/
 
 ## 5) Domain Model & Invariants
 
-```
-
-mermaid
+```mermaid
 erDiagram
   USER ||--o{ SUBSCRIPTION : has
   PLAN ||--o{ SUBSCRIPTION : selected
 
   USER {
     uuid id
-    string email
   }
 
   PLAN {
     uuid id
-    string name
   }
 
   SUBSCRIPTION {
@@ -171,9 +152,7 @@ erDiagram
 **Active uniqueness (Option A – chosen)**: a user may have **at most one Active** subscription at a time.
 **DB constraint**:
 
-```
-
-sql
+```sql
 CREATE UNIQUE INDEX IF NOT EXISTS ux_subscriptions_user_active
 ON subscriptions (user_id)
 WHERE status = 'Active';
@@ -185,9 +164,7 @@ WHERE status = 'Active';
 
 ## 6) Use-Cases (Sequence)
 
-```
-
-mermaid
+```mermaid
 sequenceDiagram
   participant C as Client
   participant API as WebAPI
@@ -223,9 +200,7 @@ sequenceDiagram
 
 ## 8) Quickstart (Local)
 
-```
-
-bash
+```bash
 # 1) bring up infra
 docker compose up -d
 
@@ -245,9 +220,7 @@ dotnet run --project src/Presentation/WebAPI/SubscriptionManagement.WebAPI.cspro
 
 ## 9) Configuration (.env)
 
-```
-
-dotenv
+```dotenv
 ConnectionStrings__Postgres=Host=localhost;Port=5432;Database=subscriptiondb;Username=dev;Password=dev
 OIDC__Authority=https://keycloak.example.com/realms/yourrealm   # optional for dev
 OIDC__Audience=subscription-api
@@ -258,20 +231,15 @@ IDEMPOTENCY__TTL_HOURS=24
 
 * PowerShell (correct way):
 
-  ```
-
-powershell
+  ```powershell
   $c = Get-Content -Raw README.md
   $c = $c -replace 'OWNER/REPO','yasserebrahimi/SubscriptionManagement'
   $c = $c -replace 'OWNER_REPO','yasserebrahimi_SubscriptionManagement'
   Set-Content README.md $c -Encoding UTF8
   ```
-
 * bash:
 
-  ```
-
-bash
+  ```bash
   sed -i 's|OWNER/REPO|yasserebrahimi/SubscriptionManagement|g; s|OWNER_REPO|yasserebrahimi_SubscriptionManagement|g' README.md
   ```
 
@@ -348,7 +316,6 @@ HttpClient policies for external dependencies (e.g., Payment Gateway):
 **PromQL Cheat-Sheet**
 
 ```
-
 # RPS
 sum(rate(http_server_request_duration_seconds_count[5m]))
 
@@ -367,25 +334,17 @@ sum(rate(http_server_request_duration_seconds_count[5m]))
 * **Unit**: `tests/UnitTests/*` (Domain + Application)
 * **Integration (Testcontainers)**: `tests/IntegrationTests.Containerized/*`
 
-  ```
-
-bash
+  ```bash
   dotnet test tests/IntegrationTests.Containerized -c Release
   ```
-
 * **Contract (Pact)**: `tests/ContractTests.Pact/*` → pact files for provider verification
 
-  ```
-
-bash
+  ```bash
   dotnet test tests/ContractTests.Pact -c Release
   ```
-
 * **Performance (k6)**: `tests/Perf/k6/activate-smoke.js`
 
-  ```
-
-bash
+  ```bash
   k6 run tests/Perf/k6/activate-smoke.js
   # or BASE_URL=http://localhost:5080 k6 run ...
   ```
@@ -412,18 +371,14 @@ Workflows (`.github/workflows`):
 
 **Local (compose)**:
 
-```
-
-bash
+```bash
 docker compose up -d
 dotnet run --project src/Presentation/WebAPI/SubscriptionManagement.WebAPI.csproj
 ```
 
 **Helm (Kubernetes)**:
 
-```
-
-bash
+```bash
 helm upgrade --install subscription-webapi deploy/helm/subscription-webapi -n subscription --create-namespace \
   --set image.repository=ghcr.io/OWNER/REPO-webapi \
   --set image.tag=latest
@@ -464,9 +419,7 @@ helm upgrade --install subscription-webapi deploy/helm/subscription-webapi -n su
 
 **Contribute**
 
-```
-
-bash
+```bash
 git checkout -b feat/your-feature
 dotnet test
 # open PR with description, logs, screenshots
@@ -482,9 +435,7 @@ Add your LICENSE file or Apache-2.0/MIT as appropriate.
 
 ### Appendix A — Timeline (Design → Implement → Document)
 
-```
-
-mermaid
+```mermaid
 gantt
     dateFormat  YYYY-MM-DD
     title Delivery Timeline
